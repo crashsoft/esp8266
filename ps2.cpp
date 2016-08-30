@@ -189,19 +189,41 @@ PS2_class::PS2_class(int clk, int data)
 {
   _ps2clk = clk;
   _ps2data = data;
+//  memset( &mbuts,0, sizeof(mbuts));
+for (int i=0;i<2;i++)
+   mbuts[i] = 0; 
+
 }
 
 
-void PS2_class::mouse_get(signed char &mx, signed char &my,signed char &mz, int &mbut)
+void PS2_class::mouse_get(signed char &_mx, signed char &_my,signed char &_mz, int &_mbut)
 { 
   if (!mouse_available) return;
-  char mstat;
   /* get a reading from the mouse */    
   mouse_write(0xeb);  /* give me data! */
   mouse_read();      /* ignore ack */
   mstat = mouse_read();
-  mx = mouse_read();
-  my = mouse_read();
-  mz = mouse_read();
-  mbut= mstat & 7;    // filter out 3 mouse buttons
+  mx = _mx = mouse_read();
+  my = _my = mouse_read();
+  mz = _mz = mouse_read();
+  _mbut= mstat & 7;    // filter out 3 mouse buttons
+}
+
+
+// returns 0 = no press, 1 = key pressed, 2 = key released, 255 if key is down
+int  PS2_class::mouse_getclick(int but)
+{
+  if(but>2) return 0;
+  int retval=255;
+
+  if (mstat & (1<<but))
+  {
+    if (mbuts[but] == 0)   retval=1;
+  }
+  else
+    if (mbuts[but] == 255) retval=2;
+       else retval=0;
+
+  mbuts[but] = retval;
+  return retval;
 }
